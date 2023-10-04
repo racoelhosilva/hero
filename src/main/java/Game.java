@@ -1,5 +1,8 @@
+import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
+import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
@@ -12,7 +15,10 @@ import java.io.IOException;
 public class Game {
 
     private Screen screen;
+    Arena arena;
     Hero hero;
+    TextGraphics graphics;
+
 
     public Game(){
         try {
@@ -28,27 +34,24 @@ public class Game {
     }
 
     private void moveHero(Position position) {
-        hero.setPosition(position);
+        arena.moveHero(position);
     }
 
-    private void draw() throws IOException{
+    private void draw() throws IOException {
         screen.clear();
-        hero.draw(screen);
+        arena.draw(graphics);
         screen.refresh();
     }
 
-    private void processKey(KeyStroke key) throws IOException {
-        switch (key.getKeyType()) {
-            case ArrowUp -> moveHero(hero.moveUp());
-            case ArrowDown -> moveHero(hero.moveDown());
-            case ArrowLeft -> moveHero(hero.moveLeft());
-            case ArrowRight -> moveHero(hero.moveRight());
-        }
-        if (key.getKeyType() == KeyType.Character && key.getCharacter() == 'q') screen.close();
+    private void processKey(KeyStroke key) throws IOException{
+        arena.processKey(key, screen);
     }
 
+
     public void run() {
-        this.hero = new Hero(10, 10);
+        this.hero = new Hero(37, 12);
+        this.arena = new Arena(73, 21, hero);
+        this.graphics = screen.newTextGraphics();
         try {
             while (true){
                 this.draw();
@@ -57,6 +60,10 @@ public class Game {
                     break;
                 }
                 this.processKey(key);
+                if (!arena.verifyMonsterColision(hero.position)){
+                    screen.close();
+                    System.out.printf("Game Over!");
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
